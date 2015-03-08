@@ -10,6 +10,9 @@ require "rspec/core"
 require "tmpdir"
 require "yaml"
 
+# for bosh_cli
+require "cli"
+
 # for the #sh helper
 require "rake"
 require "rake/file_utils"
