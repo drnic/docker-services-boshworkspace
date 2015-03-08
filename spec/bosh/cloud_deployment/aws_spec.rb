@@ -3,7 +3,12 @@ require "bosh/cloud_deployment/aws"
 
 describe Bosh::CloudDeployment::AWS do
   subject { Bosh::CloudDeployment::AWS.new }
+  before do
+    subject.director_client = instance_double("Bosh::Cli::Client::Director")
+  end
+
   it { expect(subject.cpi).to eq "aws" }
+
   describe "subnets" do
     before do
       cf_manifest = YAML.load_file(spec_asset("cf-aws-tiny.yml"))
@@ -21,13 +26,11 @@ describe Bosh::CloudDeployment::AWS do
       expect(subject.deployments_using_subnet("subnet-5351d336")).to eq ["cf"]
     end
   end
-  describe 'existing_deployment_names' do
-    it "existing_deployment_names" do
-      subject.director_client = instance_double("Bosh::Cli::Client::Director")
-      expect(subject.director_client).to receive(:list_deployments).and_return([{"name" => "foo"}, {"name" => "bar"}]).twice
-      subject.deployment_name = "bar"
-      expect(subject.existing_deployment_names(false)).to eq(%w[foo bar])
-      expect(subject.existing_deployment_names(true)).to eq(%w[foo])
-    end
+
+  it "existing_deployment_names" do
+    expect(subject.director_client).to receive(:list_deployments).and_return([{"name" => "foo"}, {"name" => "bar"}]).twice
+    subject.deployment_name = "bar"
+    expect(subject.existing_deployment_names(false)).to eq(%w[foo bar])
+    expect(subject.existing_deployment_names(true)).to eq(%w[foo])
   end
 end
