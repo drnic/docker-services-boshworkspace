@@ -1,5 +1,14 @@
+$:.unshift(File.expand_path("../../../..", __FILE__))
+require "bosh/cloud_deployment"
+
+# for the #sh helper
+require "rake"
+require "rake/file_utils"
+
 module Bosh::Cli::Command
   class SetupDeployment < Base
+    include FileUtils
+
     attr_reader :cf
 
     usage "setup deployment"
@@ -18,49 +27,17 @@ module Bosh::Cli::Command
       end
       @cf = YAML.load(cf_manifest)
 
-      unless cc_api_uri = cf["properties"]["cc"] && cf["properties"]["cc"]["srv_api_uri"]
-        err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.cc.srv_api_uri property."
-      end
-      unless system_domain = cf["properties"]["system_domain"]
-        err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.system_domain property."
-      end
-      unless nats = cf["properties"]["nats"]
-        err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.nats property."
-      end
-      # nats:
-      #   machines:
-      #   - 10.244.0.6
-      #   password: nats
-      #   port: 4222
-      #   user: nats
+      cloud_deployment = Bosh::CloudDeployment.cloud(cpi)
+      cloud_deployment.director_uuid = director.uuid
+      cloud_deployment.cf = @cf
+      cloud_deployment.deployment_name = "my-docker-services-#{cpi}"
+      cloud_deployment.setup
 
-      say "CF API: #{cc_api_uri}"
-      say "System domain: #{system_domain}"
-      say "NATS servers: #{nats["machines"].join(', ')}"
-
-      # TODO - generate this hostname, to allow docker-service to be deployed multiple times
-      broker_api_hostname = "http://cf-containers-broker.#{system_domain}"
-      say "Broker API: #{broker_api_hostname}"
-
-      puts "CPI: #{cpi}"
-      if cpi == "aws" || cpi == "openstack"
-        if subnet = cf_using_subnets?
-          security_groups = subnet["subnets"].first["cloud_properties"]["security_groups"]
-          security_groups = [security_groups] if security_groups.is_a?(String)
-          puts "Security groups: #{security_groups.join(', ')}"
-          subnet_id = ask("Subnet ID: ")
-          instance_type = ask("Instance type: ")
-        end
-      elsif cpi == "vsphere"
-        # - choose RAM/CPU/Disk for instance
-        err("VSphere templates are not yet support. Help much appreciated!")
+      deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
+      File.open(deployment_stub_file, "w") do |f|
+        f << cloud_deployment.manifest_stub.to_yaml
       end
-
-      # All except warden: choose persistent disk size (to be shared amongst all services)
-      if cpi != "warden"
-        persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
-        persistent_disk = 4096 if persistent_disk < 4096
-      end
+      sh "bosh deployment #{deployment_stub_file}"
 
       # Next: select which services to include (fewer = less docker images to fetch)
     end
@@ -90,11 +67,6 @@ module Bosh::Cli::Command
         cf["resource_pools"].first["stemcell"]["name"]
       end
 
-      # return version of stemcell used within Cloud Foundry deployment
-      def cf_stemcell_version
-        cf["resource_pools"].first["stemcell"]["version"]
-      end
-
       def prompt_for_deployment(includes_release)
         names = director.list_deployments.map { |deployment| deployment["name"] }
         # filter by includes_release
@@ -122,9 +94,5 @@ module Bosh::Cli::Command
         end
       end
 
-      # returns subnet info if any CF deployment's networks are using subnets; else nil
-      def cf_using_subnets?
-        cf["networks"].find {|network| network["subnets"]}
-      end
   end
 end
