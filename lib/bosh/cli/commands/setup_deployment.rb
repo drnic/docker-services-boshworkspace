@@ -34,13 +34,16 @@ module Bosh::Cli::Command
       cloud_deployment.deployment_name = deployment_name
       cloud_deployment.setup
 
+      if cf_services = choose_one_or_all_cf_services
+        cloud_deployment.cf_services = cf_services
+      end
+
       deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
       File.open(deployment_stub_file, "w") do |f|
         f << cloud_deployment.manifest_stub.to_yaml
       end
       sh "bosh deployment #{deployment_stub_file}"
 
-      # Next: select which services to include (fewer = less docker images to fetch)
     end
 
 
@@ -95,5 +98,13 @@ module Bosh::Cli::Command
         end
       end
 
+      # return list of selected docker services; or nil to install all services
+      def choose_one_or_all_cf_services
+        choose do |menu|
+          menu.prompt = 'Choose a service (or ALL): '
+          menu.choice("ALL") { nil }
+          menu.choice("postgresql93") { ["postgresql93"] }
+        end
+      end
   end
 end

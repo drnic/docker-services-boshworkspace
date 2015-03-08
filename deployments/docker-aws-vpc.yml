@@ -16,6 +16,7 @@ templates:
   - docker-jobs.yml
   - docker-properties.yml
   - docker-aws-vpc.yml
+  - services/all.yml
 
 meta:
   cfcontainersbroker:

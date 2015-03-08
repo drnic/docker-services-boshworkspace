@@ -7,7 +7,7 @@ class Bosh::CloudDeployment::Warden < Bosh::CloudDeployment::Base
   end
 
   def manifest_stub
-    common_stub.merge({
+    stub = common_stub.merge({
       "templates" => [
         "docker-deployment.yml",
         "docker-properties.yml",
@@ -15,6 +15,8 @@ class Bosh::CloudDeployment::Warden < Bosh::CloudDeployment::Base
         "docker-warden.yml",
       ]
     })
+    add_service_templates(stub)
+    stub
   end
 end
 Bosh::CloudDeployment.register("warden", Bosh::CloudDeployment::Warden)

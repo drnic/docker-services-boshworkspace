@@ -2,6 +2,7 @@ class Bosh::CloudDeployment::Base
   attr_accessor :cf
   attr_accessor :director_uuid
   attr_accessor :deployment_name
+  attr_accessor :cf_services
 
   attr_reader :cc_api_uri
   attr_reader :system_domain
@@ -76,5 +77,15 @@ class Bosh::CloudDeployment::Base
         },
       }
     }
+  end
+
+  def add_service_templates(stub)
+    if cf_services
+      cf_services.each do |service|
+        stub["templates"] << "services/#{service}.yml"
+      end
+    else
+      stub["templates"] << "services/all.yml"
+    end
   end
 end

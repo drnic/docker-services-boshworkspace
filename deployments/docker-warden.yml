@@ -16,6 +16,7 @@ templates:
   - docker-properties.yml
   - docker-jobs.yml
   - docker-warden.yml
+  - services/postgresql93.yml
 
 meta:
   cfcontainersbroker:

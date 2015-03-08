@@ -16,6 +16,7 @@ templates:
   - docker-jobs.yml
   - docker-properties.yml
   - docker-openstack.yml
+  - services/all.yml
 
 meta:
   openstack:

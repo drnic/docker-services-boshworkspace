@@ -30,6 +30,8 @@ class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
         "docker-openstack.yml",
       ],
     })
+    add_service_templates(stub)
+
     stub["meta"]["persistent_disk"] = persistent_disk
     stub["meta"]["subnet_ids"] = {
       "docker" => subnet_id
