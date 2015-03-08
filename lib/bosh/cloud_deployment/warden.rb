@@ -8,10 +8,6 @@ class Bosh::CloudDeployment::Warden < Bosh::CloudDeployment::Base
 
   def manifest_stub
     common_stub.merge({
-      "stemcells" => [{
-        "name" => "bosh-warden-boshlite-ubuntu-trusty-go_agent",
-        "version" => 389
-      }],
       "templates" => [
         "docker-deployment.yml",
         "docker-properties.yml",

@@ -18,10 +18,6 @@ class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
 
   def manifest_stub
     stub = common_stub.merge({
-      "stemcells" => [{
-        "name" => "bosh-openstack-kvm-ubuntu-trusty-go_agent",
-        "version" => 2865
-      }],
       "templates" => [
         "docker-deployment.yml",
         "docker-properties.yml",

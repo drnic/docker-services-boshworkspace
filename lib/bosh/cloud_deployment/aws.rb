@@ -22,10 +22,6 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
 
   def manifest_stub
     stub = common_stub.merge({
-      "stemcells" => [{
-        "name" => "bosh-aws-xen-ubuntu-trusty-go_agent",
-        "version" => 2865
-      }],
       "templates" => [
         "docker-deployment.yml",
         "docker-properties.yml",

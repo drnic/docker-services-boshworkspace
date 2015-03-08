@@ -58,7 +58,10 @@ class Bosh::CloudDeployment::Base
           "git" => "https://github.com/cf-platform-eng/docker-boshrelease.git"
         }
       ],
-      "stemcells" => nil,
+      "stemcells" => [{
+        "name" => cf_stemcell_name,
+        "version" => cf_stemcell_version
+      }],
       "templates" => nil,
       "meta" => {
         "cfcontainersbroker" => {
