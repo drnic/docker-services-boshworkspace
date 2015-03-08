@@ -16,7 +16,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @security_groups = subnet["subnets"].first["cloud_properties"]["security_groups"]
       @security_groups = [security_groups] if security_groups.is_a?(String)
       puts "Security groups: #{security_groups.join(', ')}"
-      @instance_type = ask("Instance type: ")
+      @instance_type = ask("Instance type: ").to_s
       @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
       @persistent_disk = 4096 if persistent_disk < 4096
 
@@ -24,13 +24,14 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       clashing_deployments = deployments_using_subnet(subnet_id)
       if clashing_deployments.size > 0
         say "Other deployments using same subnet '#{subnet_id}'".make_yellow
+        ip_range = nil
         until ip_range
           begin
             say "Ctrl-C to cancel to choose alternate subnet, or...".make_yellow
-            range = ask("Enter range of IPs (CIDR format: 10.11.12.10/30): ")
-            ip_range = IPAddr(range)
+            range = ask("Enter range of IPs (CIDR format: 10.11.12.10/30): ").to_s
+            ip_range = IPAddr.new(range)
             range_size = ip_range.to_range.to_a.size
-            say "Using IPs: #{range.to_range.map(&:to_s).join(', ')}"
+            say "Using IPs: #{ip_range.to_range.map(&:to_s).join(', ')}"
             if range_size < minimum_total_instances
               say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
               ip_range = nil
@@ -40,7 +41,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
           end
           @compilation_workers = ip_range.to_range.to_a.size - deployment_instances
           if debug
-            say "Subnet useful range: #{ips.to_range.first}-#{ips.to_range.last}"
+            say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
             say "Compilation workers: #{compilation_workers}"
           end
         end
