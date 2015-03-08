@@ -48,17 +48,19 @@ module Bosh::Cli::Command
           security_groups = subnet["subnets"].first["cloud_properties"]["security_groups"]
           security_groups = [security_groups] if security_groups.is_a?(String)
           puts "Security groups: #{security_groups.join(', ')}"
-          subnet_id = ask("Subnet ID for docker service: ")
+          subnet_id = ask("Subnet ID: ")
+          instance_type = ask("Instance type: ")
         end
+      elsif cpi == "vsphere"
+        # - choose RAM/CPU/Disk for instance
+        err("VSphere templates are not yet support. Help much appreciated!")
       end
-      # TODO: abstract this into handler classes based on CPI
-      # AWS/OpenStack
-      # - select subnet (if CF deployment uses subnets)
-      # - get security group for the runner/dea_next jobs
-      # - choose an instance type (more epheral disk the better)
-      # VSphere:
-      # - choose RAM/CPU/Disk for instance
+
       # All except warden: choose persistent disk size (to be shared amongst all services)
+      if cpi != "warden"
+        persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
+        persistent_disk = 4096 if persistent_disk < 4096
+      end
 
       # Next: select which services to include (fewer = less docker images to fetch)
     end
