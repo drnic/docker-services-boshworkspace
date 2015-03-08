@@ -25,18 +25,21 @@ module Bosh::Cli::Command
       end
       @cf = YAML.load(cf_manifest)
 
+      if cf_services = choose_one_or_all_cf_services
+        default_deployment_name = "my-#{cf_services.join('-')}-services-#{cpi}"
+      else
+        default_deployment_name = "my-all-services-#{cpi}"
+      end
+
       deployment_name = options[:deployment_name]
-      deployment_name ||= "my-docker-services-#{cpi}"
+      deployment_name ||= default_deployment_name
 
       cloud_deployment = Bosh::CloudDeployment.cloud(cpi)
       cloud_deployment.director_uuid = director.uuid
       cloud_deployment.cf = @cf
       cloud_deployment.deployment_name = deployment_name
+      cloud_deployment.cf_services = cf_services
       cloud_deployment.setup
-
-      if cf_services = choose_one_or_all_cf_services
-        cloud_deployment.cf_services = cf_services
-      end
 
       deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
       File.open(deployment_stub_file, "w") do |f|
