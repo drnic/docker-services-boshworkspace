@@ -5,3 +5,8 @@ if File.directory?("../../bosh-gen")
 end
 
 gem "bosh-workspace"
+
+group :test do
+  gem "rspec"
+  # gem "fakeweb"
+end
