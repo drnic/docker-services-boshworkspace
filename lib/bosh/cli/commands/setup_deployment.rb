@@ -13,12 +13,9 @@ module Bosh::Cli::Command
 
     usage "setup deployment"
     desc "Prompt user to setup Docker services prior to deployment"
+    option '--cf-deployment-name NAME', 'Select Cloud Foundry deployment name, instead of menu'
     def setup_deployment(cf_deployment_name=nil)
-      # - select target cf deployment (bosh target consul - has something like this)
-      # - download manifest
-      #   - get CC URL
-      #   - get NATS servers + credentials
-      #   - get DEA/runner security group (as the default SG)
+      cf_deployment_name = options[:cf_deployment_name]
       cf_deployment_name ||= prompt_for_deployment("cf")
 
       say "Looking up '#{cf_deployment_name}'..."
