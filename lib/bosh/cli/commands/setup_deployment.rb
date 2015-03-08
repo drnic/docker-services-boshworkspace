@@ -13,8 +13,9 @@ module Bosh::Cli::Command
 
     usage "setup deployment"
     desc "Prompt user to setup Docker services prior to deployment"
+    option '--deployment-name NAME', 'Name this deployment. Default: my-docker-services-<CPI>'
     option '--cf-deployment-name NAME', 'Select Cloud Foundry deployment name, instead of menu'
-    def setup_deployment(cf_deployment_name=nil)
+    def setup_deployment
       cf_deployment_name = options[:cf_deployment_name]
       cf_deployment_name ||= prompt_for_deployment("cf")
 
@@ -24,10 +25,13 @@ module Bosh::Cli::Command
       end
       @cf = YAML.load(cf_manifest)
 
+      deployment_name = options[:deployment_name]
+      deployment_name ||= "my-docker-services-#{cpi}"
+
       cloud_deployment = Bosh::CloudDeployment.cloud(cpi)
       cloud_deployment.director_uuid = director.uuid
       cloud_deployment.cf = @cf
-      cloud_deployment.deployment_name = "my-docker-services-#{cpi}"
+      cloud_deployment.deployment_name = deployment_name
       cloud_deployment.setup
 
       deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
