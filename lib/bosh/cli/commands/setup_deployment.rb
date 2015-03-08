@@ -1,5 +1,7 @@
 module Bosh::Cli::Command
   class SetupDeployment < Base
+    attr_reader :cf
+
     usage "setup deployment"
     desc "Prompt user to setup Docker services prior to deployment"
     def setup_deployment(cf_deployment_name=nil)
@@ -14,7 +16,8 @@ module Bosh::Cli::Command
       unless cf_manifest = director.get_deployment(cf_deployment_name)["manifest"]
         err "Deployment '#{cf_deployment_name}' has not completed successfully yet."
       end
-      cf = YAML.load(cf_manifest)
+      @cf = YAML.load(cf_manifest)
+
       unless cc_api_uri = cf["properties"]["cc"] && cf["properties"]["cc"]["srv_api_uri"]
         err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.cc.srv_api_uri property."
       end
@@ -37,6 +40,8 @@ module Bosh::Cli::Command
 
       broker_api_hostname = "http://cf-containers-broker.#{system_domain}"
       say "Broker API: #{broker_api_hostname}"
+
+      puts "CPI: #{cpi}"
       # TODO - generate this hostname, to allow docker-service to be deployed multiple times
 
       # Next: select a CPI & subnet (via cyoi)
@@ -48,6 +53,34 @@ module Bosh::Cli::Command
 
 
     private
+      # return which CPI is being used
+      # determined based on name of stemcell used in 'cf' deployment
+      def cpi
+        @cpi ||= begin
+          if cf_stemcell_name =~ /warden/
+            "warden"
+          elsif cf_stemcell_name =~ /aws/
+            "aws"
+          elsif cf_stemcell_name =~ /openstack/
+            "openstack"
+          elsif cf_stemcell_name =~ /vsphere/
+            "vsphere"
+          else
+            err "Unable to determine CPI from Cloud Foundry stemcell '#{cf_stemcell_name}'"
+          end
+        end
+      end
+
+      # return name of stemcell used within Cloud Foundry deployment
+      def cf_stemcell_name
+        cf["resource_pools"].first["stemcell"]["name"]
+      end
+
+      # return version of stemcell used within Cloud Foundry deployment
+      def cf_stemcell_version
+        cf["resource_pools"].first["stemcell"]["version"]
+      end
+
       def prompt_for_deployment(includes_release)
         names = director.list_deployments.map { |deployment| deployment["name"] }
         # filter by includes_release
