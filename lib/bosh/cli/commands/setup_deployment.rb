@@ -15,6 +15,7 @@ module Bosh::Cli::Command
     desc "Prompt user to setup Docker services prior to deployment"
     option '--deployment-name NAME', 'Name this deployment. Default: my-docker-services-<CPI>'
     option '--cf-deployment-name NAME', 'Select Cloud Foundry deployment name, instead of menu'
+    option '--debug', 'Show extra debug information on decisions made'
     def setup_deployment
       cf_deployment_name = options[:cf_deployment_name]
       cf_deployment_name ||= prompt_for_deployment("cf")
@@ -39,7 +40,12 @@ module Bosh::Cli::Command
       cloud_deployment.cf = @cf
       cloud_deployment.deployment_name = deployment_name
       cloud_deployment.cf_services = cf_services
+      cloud_deployment.debug = options[:debug]
       cloud_deployment.setup
+
+      # TODO: set/display username/password for broker API
+      # TODO: set/display broker hostname (based on service being run)
+      # TODO: display 'cf create-service-broker <service> <user> <pass> http://hostname'
 
       deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
       File.open(deployment_stub_file, "w") do |f|

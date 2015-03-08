@@ -1,4 +1,5 @@
 class Bosh::CloudDeployment::Base
+  attr_accessor :debug
   attr_accessor :cf
   attr_accessor :director_uuid
   attr_accessor :deployment_name
@@ -10,8 +11,10 @@ class Bosh::CloudDeployment::Base
   attr_reader :broker_api_hostname
 
   def setup_cf
-    puts "Director UUID: #{director_uuid}"
-    puts "CPI: #{cpi}"
+    if debug
+      puts "Director UUID: #{director_uuid}"
+      puts "CPI: #{cpi}"
+    end
 
     unless @cc_api_uri = cf["properties"]["cc"] && cf["properties"]["cc"]["srv_api_uri"]
       err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.cc.srv_api_uri property."
@@ -25,12 +28,12 @@ class Bosh::CloudDeployment::Base
 
     # TODO - generate this hostname, to allow docker-service to be deployed multiple times
     @broker_api_hostname = "http://cf-containers-broker.#{system_domain}"
-    say "Broker API: #{broker_api_hostname}"
-
-
-    say "CF API: #{cc_api_uri}"
-    say "System domain: #{system_domain}"
-    say "NATS servers: #{nats["machines"].join(', ')}"
+    if debug
+      say "Broker API: #{broker_api_hostname}"
+      say "CF API: #{cc_api_uri}"
+      say "System domain: #{system_domain}"
+      say "NATS servers: #{nats["machines"].join(', ')}"
+    end
   end
 
   # returns subnet info if any CF deployment's networks are using subnets; else nil
