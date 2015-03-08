@@ -38,16 +38,25 @@ module Bosh::Cli::Command
       say "System domain: #{system_domain}"
       say "NATS servers: #{nats["machines"].join(', ')}"
 
+      # TODO - generate this hostname, to allow docker-service to be deployed multiple times
       broker_api_hostname = "http://cf-containers-broker.#{system_domain}"
       say "Broker API: #{broker_api_hostname}"
 
       puts "CPI: #{cpi}"
-      # TODO - generate this hostname, to allow docker-service to be deployed multiple times
+      if cpi == "aws" || cpi == "openstack"
+        if cf_using_subnets?
+          subnet_id = ask("Subnet ID for docker service:")
+        end
+      end
+      # TODO: abstract this into handler classes based on CPI
+      # AWS/OpenStack
+      # - select subnet (if CF deployment uses subnets)
+      # - get security group for the runner/dea_next jobs
+      # - choose an instance type (more epheral disk the better)
+      # VSphere:
+      # - choose RAM/CPU/Disk for instance
+      # All except warden: choose persistent disk size (to be shared amongst all services)
 
-      # Next: select a CPI & subnet (via cyoi)
-      # Next: if AWS/OpenStack, get security group for the runner/dea_next jobs
-      # Next: choose an instance type (more epheral disk the better)
-      # Next: choose persistent disk size (to be shared amongst all services)
       # Next: select which services to include (fewer = less docker images to fetch)
     end
 
@@ -106,6 +115,11 @@ module Bosh::Cli::Command
             end
           end
         end
+      end
+
+      # returns true if any CF deployment's networks are using subnets
+      def cf_using_subnets?
+        cf["networks"].any? {|network| network["subnets"]}
       end
   end
 end
