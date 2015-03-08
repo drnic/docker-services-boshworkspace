@@ -1,3 +1,6 @@
+meta:
+  persistent_disk: 65536
+
 networks: (( merge ))
 
 jobs:
@@ -7,6 +10,6 @@ jobs:
       - name: cf-containers-broker
     instances: 1
     resource_pool: default
-    persistent_disk: 65536
+    persistent_disk: (( meta.persistent_disk ))
     networks:
       - name: default

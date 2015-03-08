@@ -1,5 +1,10 @@
 require "bosh/cloud_deployment/base"
 class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
+  attr_reader :security_groups
+  attr_reader :subnet_id
+  attr_reader :instance_type
+  attr_reader :persistent_disk
+
   def cpi; "openstack"; end
 
   def setup
@@ -12,8 +17,8 @@ class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
       @instance_type = ask("Instance type: ")
     end
 
-    persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
-    persistent_disk = 4096 if persistent_disk < 4096
+    @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
+    @persistent_disk = 4096 if @persistent_disk < 4096
   end
 
   def manifest_stub
@@ -25,6 +30,7 @@ class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
         "docker-openstack.yml",
       ],
     })
+    stub["meta"]["persistent_disk"] = persistent_disk
     stub["meta"]["subnet_ids"] = {
       "docker" => subnet_id
     }
