@@ -63,8 +63,9 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
     end
   end
 
+  # return list of deployments using specific subnet
   def deployments_using_subnet(subnet_id)
-    clashing_deployment_names = existing_deployment_names.select do |name|
+    clashing_deployment_names = existing_deployment_names(true).select do |name|
       subnets = deployment_subnets(name)
       subnets.include?(subnet_id)
     end

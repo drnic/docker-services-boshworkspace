@@ -93,13 +93,19 @@ class Bosh::CloudDeployment::Base
     end
   end
 
-  def existing_deployment_names
-    director.list_deployments.map { |deployment| deployment["name"] }
+  # return existing/running deployments; set +ignore_self+ to true to ignore this deployment
+  def existing_deployment_names(ignore_self=false)
+    all = director_client.list_deployments.map { |deployment| deployment["name"] }
+    if ignore_self
+      all - [deployment_name]
+    else
+      all
+    end
   end
 
   # loads deployment manifest; returns nil if deployment missing or not completed
   def get_deployment_manifest(deployment_name)
-    if manifest_yaml = director.get_deployment(deployment_name)["manifest"]
+    if manifest_yaml = director_client.get_deployment(deployment_name)["manifest"]
       manifest = YAML.load(manifest_yaml)
     else
       nil
