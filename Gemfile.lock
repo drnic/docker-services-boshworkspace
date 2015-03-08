@@ -144,4 +144,5 @@ PLATFORMS
 DEPENDENCIES
   bosh-gen!
   bosh-workspace
+  ipaddress
   rspec

@@ -7,6 +7,10 @@ meta:
 
   stemcell: (( merge ))
 
+  compilation:
+    workers: 6
+
+
 name: (( meta.environment ))
 
 director_uuid: (( merge ))
@@ -20,7 +24,7 @@ jobs: (( merge ))
 properties: (( merge ))
 
 compilation:
-  workers: 6
+  workers: (( meta.compilation.workers ))
   network: default
   reuse_compilation_vms: true
   cloud_properties: (( merge ))

@@ -1,9 +1,12 @@
 require "bosh/cloud_deployment/base"
+require "ipaddr"
+
 class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
   attr_reader :security_groups
   attr_reader :subnet_id
   attr_reader :instance_type
   attr_reader :persistent_disk
+  attr_reader :compilation_workers
 
   def cpi; "aws"; end
 
@@ -14,12 +17,45 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @security_groups = [security_groups] if security_groups.is_a?(String)
       puts "Security groups: #{security_groups.join(', ')}"
       @instance_type = ask("Instance type: ")
-      @subnet_id = ask("Subnet ID: ")
-      clashing_deployments = lookup_deployments_using_same_subnet
-    end
+      @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
+      @persistent_disk = 4096 if persistent_disk < 4096
 
-    @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
-    @persistent_disk = 4096 if persistent_disk < 4096
+      @subnet_id = ask("Subnet ID: ")
+      clashing_deployments = deployments_using_subnet(subnet_id)
+      if clashing_deployments.size > 0
+        say "Other deployments using same subnet '#{subnet_id}'".make_yellow
+        until ip_range
+          begin
+            say "Ctrl-C to cancel to choose alternate subnet, or...".make_yellow
+            range = ask("Enter range of IPs (CIDR format: 10.11.12.10/30): ")
+            ip_range = IPAddr(range)
+            range_size = ip_range.to_range.to_a.size
+            say "Using IPs: #{range.to_range.map(&:to_s).join(', ')}"
+            if range_size < minimum_total_instances
+              say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
+              ip_range = nil
+            end
+          rescue IPAddr::InvalidAddressError
+            say "Invalid CIDR format. Example 10.11.12.10/30".make_red
+          end
+          @compilation_workers = ip_range.to_range.to_a.size - deployment_instances
+          if debug
+            say "Subnet useful range: #{ips.to_range.first}-#{ips.to_range.last}"
+            say "Compilation workers: #{compilation_workers}"
+          end
+        end
+      end
+    end
+  end
+
+  # minimum number of instances for deployment (including compilation workers)
+  def minimum_total_instances
+    deployment_instances + 1
+  end
+
+  # currently each deployment only permits 1 docker/broker instance
+  def deployment_instances
+    1
   end
 
   def manifest_stub
