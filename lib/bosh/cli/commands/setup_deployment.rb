@@ -100,10 +100,19 @@ module Bosh::Cli::Command
 
       # return list of selected docker services; or nil to install all services
       def choose_one_or_all_cf_services
+        templates = Dir["templates/services/*.yml"].reject {|f| File.basename(f) == "all.yml"}
+        services = templates.map do |path|
+          template = YAML.load_file(path)
+          label = template["properties"]["cfcontainersbroker"]["services"].first["name"]
+          name = template["properties"]["cfcontainersbroker"]["services"].first["metadata"]["displayName"]
+          [label, name]
+        end
         choose do |menu|
           menu.prompt = 'Choose a service (or ALL): '
           menu.choice("ALL") { nil }
-          menu.choice("postgresql93") { ["postgresql93"] }
+          services.each do |label, name|
+            menu.choice(name) { [label] }
+          end
         end
       end
   end

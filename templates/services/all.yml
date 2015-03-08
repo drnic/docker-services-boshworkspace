@@ -534,7 +534,7 @@ properties:
                 - 'Dedicated Logstash 1.4 server'
                 - 'Logstash 1.4 running inside a Docker container'
       - id: 'b9310aba-2fa4-11e4-b626-a6c5e4d22fb7'
-        name: 'nats'
+        name: 'nats05'
         description: 'NATS is a lightweight cloud messaging system'
         bindable: true
         tags:
@@ -578,7 +578,7 @@ properties:
                 - 'Dedicated NATS server'
                 - 'NATS running inside a Docker container'
       - id: '211411a0-2da1-11e4-852f-a6c5e4d22fb7'
-        name: 'etcd'
+        name: 'etcd04'
         description: 'Etcd key-value storage'
         bindable: true
         tags:
@@ -620,7 +620,7 @@ properties:
                 - 'Dedicated Etcd 0.4.6 server'
                 - 'Etcd 0.4.6 running inside a Docker container'
       - id: '2cb838d0-2df9-11e4-a506-a6c5e4d22fb7'
-        name: 'consul'
+        name: 'consul03'
         description: 'Consul key-value storage'
         bindable: true
         tags:
@@ -662,7 +662,7 @@ properties:
                 - 'Dedicated Consul server v0.3.1'
                 - 'Consul server running inside a Docker container'
       - id: '617b9186-2e5b-11e4-af5d-a6c5e4d22fb7'
-        name: 'rethinkdb'
+        name: 'rethinkdb114'
         description: 'RethinkDB is built to store JSON documents'
         bindable: true
         tags:
