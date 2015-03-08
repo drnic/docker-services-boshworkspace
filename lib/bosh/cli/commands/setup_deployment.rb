@@ -44,8 +44,11 @@ module Bosh::Cli::Command
 
       puts "CPI: #{cpi}"
       if cpi == "aws" || cpi == "openstack"
-        if cf_using_subnets?
-          subnet_id = ask("Subnet ID for docker service:")
+        if subnet = cf_using_subnets?
+          security_groups = subnet["subnets"].first["cloud_properties"]["security_groups"]
+          security_groups = [security_groups] if security_groups.is_a?(String)
+          puts "Security groups: #{security_groups.join(', ')}"
+          subnet_id = ask("Subnet ID for docker service: ")
         end
       end
       # TODO: abstract this into handler classes based on CPI
@@ -117,9 +120,9 @@ module Bosh::Cli::Command
         end
       end
 
-      # returns true if any CF deployment's networks are using subnets
+      # returns subnet info if any CF deployment's networks are using subnets; else nil
       def cf_using_subnets?
-        cf["networks"].any? {|network| network["subnets"]}
+        cf["networks"].find {|network| network["subnets"]}
       end
   end
 end
