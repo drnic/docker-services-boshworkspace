@@ -27,7 +27,7 @@ class Bosh::CloudDeployment::Base
     end
 
     # TODO - generate this hostname, to allow docker-service to be deployed multiple times
-    @broker_api_hostname = "http://cf-containers-broker.#{system_domain}"
+    @broker_api_hostname = "cf-containers-broker.#{system_domain}"
     if debug
       say "Broker API: #{broker_api_hostname}"
       say "CF API: #{cc_api_uri}"
