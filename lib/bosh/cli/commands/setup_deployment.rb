@@ -36,6 +36,7 @@ module Bosh::Cli::Command
       deployment_name ||= default_deployment_name
 
       cloud_deployment = Bosh::CloudDeployment.cloud(cpi)
+      cloud_deployment.director_client = director
       cloud_deployment.director_uuid = director.uuid
       cloud_deployment.cf = @cf
       cloud_deployment.deployment_name = deployment_name

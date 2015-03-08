@@ -8,6 +8,7 @@ $:.unshift(File.expand_path("../../lib", __FILE__))
 
 require "rspec/core"
 require "tmpdir"
+require "yaml"
 
 # for the #sh helper
 require "rake"
@@ -19,7 +20,7 @@ Dir[File.dirname(__FILE__) + '/support/*'].each do |path|
 end
 
 def spec_asset(filename)
-  File.expand_path("../assets/#{filename}", __FILE__)
+  File.expand_path("../fixtures/#{filename}", __FILE__)
 end
 
 def files_match(filename, expected_filename)

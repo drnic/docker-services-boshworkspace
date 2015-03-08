@@ -1,6 +1,7 @@
 class Bosh::CloudDeployment::Base
   attr_accessor :debug
   attr_accessor :cf
+  attr_accessor :director_client
   attr_accessor :director_uuid
   attr_accessor :deployment_name
   attr_accessor :cf_services
@@ -89,6 +90,19 @@ class Bosh::CloudDeployment::Base
       end
     else
       stub["templates"] << "services/all.yml"
+    end
+  end
+
+  def existing_deployment_names
+    director.list_deployments.map { |deployment| deployment["name"] }
+  end
+
+  # loads deployment manifest; returns nil if deployment missing or not completed
+  def get_deployment_manifest(deployment_name)
+    if manifest_yaml = director.get_deployment(deployment_name)["manifest"]
+      manifest = YAML.load(manifest_yaml)
+    else
+      nil
     end
   end
 end
