@@ -51,7 +51,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
           ]
           say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
 
-          ask("Confirm these subnet sub-ranges make sense. Ctrl-C and repeat if they don't... ".make_yellow)
+          ask("Confirm these subnet sub-ranges make sense. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
           if debug
             say "Compilation workers: #{compilation_workers}"
           end
