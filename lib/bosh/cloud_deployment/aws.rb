@@ -43,14 +43,16 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
           end
           @compilation_workers = ip_range.to_range.to_a.size - deployment_instances
           excluded_reserved_ranges = existing_subnet_range.reject(ip_range)
+          say "Subnet range: #{existing_subnet['range']}"
+          say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
+          reserved_ranges = [
+            "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
+            "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
+          ]
+          say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
+
+          ask("Confirm these subnet sub-ranges make sense. Ctrl-C and repeat if they don't... ".make_yellow)
           if debug
-            say "Subnet range: #{existing_subnet['range']}"
-            say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
-            reserved_ranges = [
-              "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
-              "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
-            ]
-            say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
             say "Compilation workers: #{compilation_workers}"
           end
         end
