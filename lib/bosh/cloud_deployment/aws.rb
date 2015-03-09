@@ -24,7 +24,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @subnet_id = ask("Subnet ID: ")
       clashing_deployments = deployments_using_subnet(subnet_id)
       if clashing_deployments.size > 0
-        say "Other deployments using same subnet '#{subnet_id}'".make_yellow
+        say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow
         existing_subnet = subnet_from_deployment(subnet_id, clashing_deployments.first)
         existing_subnet_range = IPAddr.new(existing_subnet['range'])
         ip_range = nil
@@ -34,7 +34,6 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
             range = ask("Enter range of IPs (CIDR format: #{existing_subnet_range}/30): ").to_s
             ip_range = IPAddr.new(range)
             range_size = ip_range.to_range.to_a.size
-            say "Using IPs: #{ip_range.to_range.map(&:to_s).join(', ')}"
             if range_size < minimum_total_instances
               say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
               ip_range = nil
@@ -47,7 +46,11 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
           if debug
             say "Subnet range: #{existing_subnet['range']}"
             say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
-            say "Subnet reserved ranges: #{excluded_reserved_ranges.inspect}"
+            reserved_ranges = [
+              "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
+              "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
+            ]
+            say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
             say "Compilation workers: #{compilation_workers}"
           end
         end
