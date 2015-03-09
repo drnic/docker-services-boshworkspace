@@ -25,6 +25,16 @@ describe Bosh::CloudDeployment::AWS do
       expect(subject).to receive(:existing_deployment_names).and_return(["cf"])
       expect(subject.deployments_using_subnet("subnet-5351d336")).to eq ["cf"]
     end
+
+    it "subnet_from_deployment finds subnet" do
+      subnet = subject.subnet_from_deployment("subnet-5351d336", "cf")
+      expect(subnet).to_not be_nil
+      expect(subnet["range"]).to eq "10.10.3.0/24"
+    end
+    it "subnet_from_deployment does not find subnet" do
+      subnet = subject.subnet_from_deployment("subnet-unknown", "cf")
+      expect(subnet).to be_nil
+    end
   end
 
   it "existing_deployment_names" do
