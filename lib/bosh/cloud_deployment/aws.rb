@@ -22,7 +22,8 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @persistent_disk = 4096 if persistent_disk < 4096
 
       @subnet_id = ask("Subnet ID: ")
-      clashing_deployments = deployments_using_subnet(subnet_id)
+      # clashing_deployments = deployments_using_subnet(subnet_id)
+      clashing_deployments = []
       if clashing_deployments.size > 0
         say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow
         existing_subnet = subnet_from_deployment(subnet_id, clashing_deployments.first)
@@ -132,7 +133,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
   def deployments_using_subnet(subnet_id)
     clashing_deployment_names = existing_deployment_names(true).select do |name|
       subnets = deployment_subnets(name)
-      subnets.include?(subnet_id)
+      subnets.include?(subnet_id) if subnets
     end
   end
 end
