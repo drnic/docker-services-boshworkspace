@@ -59,8 +59,18 @@ You are now ready to proceed to uploading assets and starting the deployment.
 ```
 bosh prepare deployment
 bosh deploy
+```
+
+After BOSH finishes deployment the broker is not yet ready (although you can't see this status). It is quietly downloading the Docker images for the service(s) you selected. This can take a few minutes or many minutes (if you selected all the services).
+
+Run the following command every minute or so until it works.
+
 cf create-service-broker docker containers containers http://cf-containers-broker.10.244.0.34.xip.io
-# List services
+```
+
+Once the command above works you can now enable your services to some/all organizations:
+
+```
 cf service-access
 cf enable-service-access <service_name>
 ```
