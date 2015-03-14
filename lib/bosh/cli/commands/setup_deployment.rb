@@ -13,7 +13,7 @@ module Bosh::Cli::Command
 
     usage "setup deployment"
     desc "Prompt user to setup Docker services prior to deployment"
-    option '--deployment-name NAME', 'Name this deployment. Default: my-docker-services-<CPI>'
+    option '--deployment-name NAME', 'Name this deployment. Default: cf-containers-broker-<services>'
     option '--cf-deployment-name NAME', 'Select Cloud Foundry deployment name, instead of menu'
     option '--debug', 'Show extra debug information on decisions made'
     def setup_deployment
@@ -27,9 +27,9 @@ module Bosh::Cli::Command
       @cf = YAML.load(cf_manifest)
 
       if cf_services = choose_one_or_all_cf_services
-        default_deployment_name = "my-#{cf_services.join('-')}-services-#{cpi}"
+        default_deployment_name = "cf-containers-broker-#{cf_services.join('-')}"
       else
-        default_deployment_name = "my-all-services-#{cpi}"
+        default_deployment_name = "cf-containers-broker"
       end
 
       deployment_name = options[:deployment_name]

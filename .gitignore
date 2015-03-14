@@ -3,3 +3,4 @@
 .releases*
 .stubs*
 deployments/my*
+deployments/cf*
