@@ -28,9 +28,17 @@ class Bosh::CloudDeployment::Base
     end
 
     # TODO - generate this hostname, to allow docker-service to be deployed multiple times
-    @broker_api_hostname = "cf-containers-broker.#{system_domain}"
+    if cf_services
+      @broker_api_hostname = "cf-containers-broker-#{cf_services.join('-')}.#{system_domain}"
+    else
+      @broker_api_hostname = "cf-containers-broker.#{system_domain}"
+    end
+
     if debug
       say "Broker API: #{broker_api_hostname}"
+    end
+
+    if debug
       say "CF API: #{cc_api_uri}"
       say "System domain: #{system_domain}"
       say "NATS servers: #{nats["machines"].join(', ')}"
