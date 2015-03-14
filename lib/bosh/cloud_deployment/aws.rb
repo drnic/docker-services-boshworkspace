@@ -21,8 +21,8 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
       @persistent_disk = 4096 if persistent_disk < 4096
 
-      @subnet_id = ask("Subnet ID: ")
-      # clashing_deployments = deployments_using_subnet(subnet_id)
+      @subnet_id = ask("Subnet ID: ").to_s
+      # TODO: clashing_deployments = deployments_using_subnet(subnet_id)
       clashing_deployments = []
       if clashing_deployments.size > 0
         say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow

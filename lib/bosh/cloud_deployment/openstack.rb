@@ -13,8 +13,8 @@ class Bosh::CloudDeployment::OpenStack < Bosh::CloudDeployment::Base
       @security_groups = subnet["subnets"].first["cloud_properties"]["security_groups"]
       @security_groups = [security_groups] if security_groups.is_a?(String)
       puts "Security groups: #{security_groups.join(', ')}"
-      @subnet_id = ask("Subnet ID: ")
-      @instance_type = ask("Instance type: ")
+      @subnet_id = ask("Subnet ID: ").to_s
+      @instance_type = ask("Instance type: ").to_s
     end
 
     @persistent_disk = ask("Persistent disk volume size (Gb): ").to_i * 1024
