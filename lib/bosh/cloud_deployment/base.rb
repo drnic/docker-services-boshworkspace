@@ -27,13 +27,7 @@ class Bosh::CloudDeployment::Base
       err "Deployment '#{cf_deployment_name}' is not Cloud Foundry. Missing properties.nats property."
     end
 
-    # TODO - generate this hostname, to allow docker-service to be deployed multiple times
-    if cf_services
-      @broker_api_hostname = "cf-containers-broker-#{cf_services.join('-')}.#{system_domain}"
-    else
-      @broker_api_hostname = "cf-containers-broker.#{system_domain}"
-    end
-
+    @broker_api_hostname = "#{deployment_name.gsub(/\W+/, '-')}.#{system_domain}"
     if debug
       say "Broker API: #{broker_api_hostname}"
     end
