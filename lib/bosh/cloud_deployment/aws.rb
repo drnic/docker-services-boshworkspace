@@ -29,7 +29,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @subnet_id = ask("Subnet ID: ").to_s
       clashing_deployments = deployments_using_subnet(subnet_id)
       if clashing_deployments.size > 0
-        setup_reusing_subnet
+        setup_reusing_subnet(clashing_deployments)
       else
         setup_new_subnet
       end
@@ -138,6 +138,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
         say "Invalid CIDR format. Example 10.11.12.10/30".make_red
       end
     end
+
     # gateway is next IP of range
     @subnet_gateway = @range.succ.to_s
 
@@ -148,7 +149,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
     @subnet_reserved = ["#{subnet_start.gsub(/\.\d+$/, '.2')}-#{subnet_start.gsub(/\.\d+$/, '.4')}"]
   end
 
-  def setup_reusing_subnet
+  def setup_reusing_subnet(clashing_deployments)
     say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow
     existing_subnet = subnet_from_deployment(subnet_id, clashing_deployments.first)
     existing_subnet_range = IPAddr.new(existing_subnet['range'])
@@ -170,14 +171,22 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       excluded_reserved_ranges = existing_subnet_range.reject(ip_range)
       say "Subnet range: #{existing_subnet['range']}"
       say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
-      reserved_ranges = [
+      @subnet_reserved = [
         "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
         "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
       ]
-      say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
+      say "Subnet reserved ranges: #{subnet_reserved.join(', ')}"
 
-      ask("Confirm these subnet sub-ranges make sense. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
+      ask("Confirm these subnet sub-ranges make sense and press ENTER. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
     end
+
+    # TODO: setup these variables from subnet definition from other deployment manifest
+
+    # gateway is next IP of range
+    @subnet_range = existing_subnet['range']
+    @subnet_gateway = existing_subnet['gateway']
+    @subnet_dns = existing_subnet['dns']
+
   end
 end
 Bosh::CloudDeployment.register("aws", Bosh::CloudDeployment::AWS)
