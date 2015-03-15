@@ -5,6 +5,7 @@ class Bosh::CloudDeployment::Base
   attr_accessor :director_uuid
   attr_accessor :deployment_name
   attr_accessor :cf_services
+  attr_accessor :username, :password
 
   attr_reader :cc_api_uri
   attr_reader :system_domain
@@ -12,6 +13,9 @@ class Bosh::CloudDeployment::Base
   attr_reader :broker_api_hostname
 
   def setup_cf
+    self.username ||= 'containers'
+    self.password ||= 'containers'
+
     if debug
       puts "Director UUID: #{director_uuid}"
       puts "CPI: #{cpi}"
@@ -74,6 +78,8 @@ class Bosh::CloudDeployment::Base
         "cfcontainersbroker" => {
           "cc_api_uri" => cc_api_uri,
           "external_host" => broker_api_hostname,
+          "username" => username,
+          "password" => password
         },
         "nats" => {
           "machines" => nats["machines"],
@@ -83,6 +89,10 @@ class Bosh::CloudDeployment::Base
         },
       }
     }
+  end
+
+  def broker_api_uri
+    "http://#{broker_api_hostname}"
   end
 
   def add_service_templates(stub)

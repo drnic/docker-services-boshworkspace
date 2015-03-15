@@ -41,19 +41,37 @@ module Bosh::Cli::Command
       cloud_deployment.cf = @cf
       cloud_deployment.deployment_name = deployment_name
       cloud_deployment.cf_services = cf_services
+      cloud_deployment.password = generate_password
       cloud_deployment.debug = options[:debug]
       cloud_deployment.setup
 
-      # TODO: set/display username/password for broker API
-      # TODO: set/display broker hostname (based on service being run)
-      # TODO: display 'cf create-service-broker <service> <user> <pass> http://hostname'
 
       deployment_stub_file = "deployments/#{cloud_deployment.deployment_name}.yml"
       File.open(deployment_stub_file, "w") do |f|
         f << cloud_deployment.manifest_stub.to_yaml
       end
       sh "bosh deployment #{deployment_stub_file}"
+      sh "bosh deploy"
 
+      say "Docker images being fetched. Polling until broker alive...".make_green
+      require "net/http"
+      require "uri"
+
+      user, pass = cloud_deployment.username, cloud_deployment.password
+
+      http = Net::HTTP.new(cloud_deployment.broker_api_hostname)
+      response = nil
+      until response && (response.code.to_i < 400)
+        sleep(5); print "."
+        request = Net::HTTP::Get.new("/v2/catalog")
+        request.basic_auth(user, pass)
+        response = http.request(request)
+      end
+      say "complete.".make_green
+
+      broker_uri = cloud_deployment.broker_api_uri
+      say "Login to Cloud Foundry as an admin and register your broker with:".make_green
+      say "cf create-service-broker #{deployment_name} #{user} #{pass} #{broker_uri}"
     end
 
 
@@ -124,6 +142,10 @@ module Bosh::Cli::Command
             menu.choice(name) { [label] }
           end
         end
+      end
+
+      def generate_password
+        (0...20).map { ('a'..'z').to_a[rand(26)] }.join
       end
   end
 end

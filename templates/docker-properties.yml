@@ -2,14 +2,16 @@ meta:
   cfcontainersbroker:
     cc_api_uri: (( merge || "https://api.10.244.0.34.xip.io" ))
     external_host: (( merge || "cf-containers-broker.10.244.0.34.xip.io" ))
+    username: containers
+    password: containers
     protocol: http
   nats: (( merge || meta.nats ))
 
 properties:
   nats: (( meta.nats ))
   cfcontainersbroker:
-    auth_username: 'containers'
-    auth_password: 'containers'
+    auth_username: (( meta.cfcontainersbroker.username ))
+    auth_password: (( meta.cfcontainersbroker.password ))
     cookie_secret: 'e7247dae-a252-4393-afa3-2219c1c02efd'
     cc_api_uri: (( meta.cfcontainersbroker.cc_api_uri ))
     external_host: (( meta.cfcontainersbroker.external_host ))
