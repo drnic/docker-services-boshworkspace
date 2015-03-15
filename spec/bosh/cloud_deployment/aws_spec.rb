@@ -36,6 +36,14 @@ describe Bosh::CloudDeployment::AWS do
       expect(subnet).to be_nil
     end
   end
+  it "splits reused subnets into two reserved ranges" do
+    first_range = [IPAddr.new("10.10.5.0"), IPAddr.new("10.10.5.15")]
+    last_range = [IPAddr.new("10.10.5.32"), IPAddr.new("10.10.5.255")]
+    ranges = subject.to_subnet_reserved(first_range, last_range)
+    expect(ranges.size).to eq 2
+    expect(ranges.first).to eq("10.10.5.2-10.10.5.15")
+    expect(ranges.last).to eq("10.10.5.32-10.10.5.254")
+  end
 
   it "existing_deployment_names" do
     expect(subject.director_client).to receive(:list_deployments).and_return([{"name" => "foo"}, {"name" => "bar"}]).twice

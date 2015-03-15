@@ -171,22 +171,27 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       excluded_reserved_ranges = existing_subnet_range.reject(ip_range)
       say "Subnet range: #{existing_subnet['range']}"
       say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
-      @subnet_reserved = [
-        "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
-        "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
-      ]
+
+      @subnet_reserved = to_subnet_reserved(*excluded_reserved_ranges)
       say "Subnet reserved ranges: #{subnet_reserved.join(', ')}"
 
       ask("Confirm these subnet sub-ranges make sense and press ENTER. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
     end
 
-    # TODO: setup these variables from subnet definition from other deployment manifest
-
-    # gateway is next IP of range
     @subnet_range = existing_subnet['range']
     @subnet_gateway = existing_subnet['gateway']
     @subnet_dns = existing_subnet['dns']
 
+  end
+
+  # Resulting range must start at .2 (skip .0, .1); and end at .254 (skip .255 broadcast)
+  # - 10.10.5.2-10.10.5.15
+  # - 10.10.5.32-10.10.5.254
+  def to_subnet_reserved(first_range, last_range)
+    [
+      "#{first_range.first.succ.succ}-#{first_range.last}",
+      "#{last_range.first}-#{last_range.last.to_s.gsub(/\.\d+$/, '.254')}",
+    ]
   end
 end
 Bosh::CloudDeployment.register("aws", Bosh::CloudDeployment::AWS)
