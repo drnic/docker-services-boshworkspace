@@ -55,7 +55,6 @@ module Bosh::Cli::Command
 
       say "Docker images being fetched. Polling until broker alive...".make_green
       require "net/http"
-      require "uri"
 
       user, pass = cloud_deployment.username, cloud_deployment.password
 

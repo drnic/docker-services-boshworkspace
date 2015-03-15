@@ -4,10 +4,15 @@ require "core-ext/ipaddr"
 
 class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
   attr_reader :security_groups
-  attr_reader :subnet_id
   attr_reader :instance_type
   attr_reader :persistent_disk
   attr_reader :compilation_workers
+
+  attr_reader :subnet_id
+  attr_reader :subnet_range
+  attr_reader :subnet_gateway
+  attr_reader :subnet_dns
+  attr_reader :subnet_reserved
 
   def cpi; "aws"; end
 
@@ -22,42 +27,16 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @persistent_disk = 4096 if persistent_disk < 4096
 
       @subnet_id = ask("Subnet ID: ").to_s
-      # TODO: clashing_deployments = deployments_using_subnet(subnet_id)
-      clashing_deployments = []
+      clashing_deployments = deployments_using_subnet(subnet_id)
       if clashing_deployments.size > 0
-        say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow
-        existing_subnet = subnet_from_deployment(subnet_id, clashing_deployments.first)
-        existing_subnet_range = IPAddr.new(existing_subnet['range'])
-        ip_range = nil
-        until ip_range
-          begin
-            say "Ctrl-C to cancel to choose alternate subnet, or...".make_yellow
-            range = ask("Enter range of IPs (CIDR format: #{existing_subnet_range}/30): ").to_s
-            ip_range = IPAddr.new(range)
-            range_size = ip_range.to_range.to_a.size
-            if range_size < minimum_total_instances
-              say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
-              ip_range = nil
-            end
-          rescue IPAddr::InvalidAddressError
-            say "Invalid CIDR format. Example 10.11.12.10/30".make_red
-          end
-          @compilation_workers = ip_range.to_range.to_a.size - deployment_instances
-          excluded_reserved_ranges = existing_subnet_range.reject(ip_range)
-          say "Subnet range: #{existing_subnet['range']}"
-          say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
-          reserved_ranges = [
-            "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
-            "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
-          ]
-          say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
-
-          ask("Confirm these subnet sub-ranges make sense. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
-          if debug
-            say "Compilation workers: #{compilation_workers}"
-          end
-        end
+        setup_reusing_subnet
+      else
+        setup_new_subnet
       end
+    end
+
+    if debug
+      say "Compilation workers: #{compilation_workers}"
     end
   end
 
@@ -83,11 +62,18 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
     add_service_templates(stub)
 
     stub["meta"]["persistent_disk"] = persistent_disk
-    stub["meta"]["subnet_ids"] = {
-      "docker" => subnet_id
-    }
-    stub["meta"]["security_groups"] = security_groups
     stub["meta"]["instance_type"] = instance_type
+    stub["meta"]["subnets"] = [{
+      "name" => "name_unused",
+      "range" => subnet_range,
+      "reserved" => subnet_reserved,
+      "gateway" => subnet_gateway,
+      "dns" => subnet_dns,
+      "cloud_properties" => {
+        "security_groups" => security_groups,
+        "subnet" => subnet_id
+      }
+    }]
     stub
   end
 
@@ -134,6 +120,63 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
     clashing_deployment_names = existing_deployment_names(true).select do |name|
       subnets = deployment_subnets(name)
       subnets.include?(subnet_id) if subnets
+    end
+  end
+
+  def setup_new_subnet
+    say "No other deployments using same subnet".make_green
+    until subnet_range
+      @subnet_range = ask("Subnet CIDR range: ").to_s
+      @range = IPAddr.new(range)
+      range_size = @range.to_range.to_a.size
+      if range_size < minimum_total_instances
+        say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
+        @subnet_range = nil
+      end
+
+    rescue IPAddr::InvalidAddressError
+      say "Invalid CIDR format. Example 10.11.12.10/30".make_red
+    end
+
+    # gateway is next IP of range
+    @subnet_gateway = subnet_range.succ
+
+    subnet_start = subnet_range.to_s
+    # default DNS is X.Y.0.2
+    @subnet_dns = subnet_start.gsub(/\.\d+\.\d+$/, '.0.2')
+
+    @subnet_reserved = ["#{subnet_start.gsub(/\.\d+$/, '.2')}-#{subnet_start.gsub(/\.\d+$/, '.4')}"]
+  end
+
+  def setup_reusing_subnet
+    say "Other deployments using same subnet '#{subnet_id}': #{clashing_deployments.join(', ')}".make_yellow
+    existing_subnet = subnet_from_deployment(subnet_id, clashing_deployments.first)
+    existing_subnet_range = IPAddr.new(existing_subnet['range'])
+    ip_range = nil
+    until ip_range
+      begin
+        say "Ctrl-C to cancel to choose alternate subnet, or...".make_yellow
+        range = ask("Enter range of IPs (CIDR format: #{existing_subnet_range}/30): ").to_s
+        ip_range = IPAddr.new(range)
+        range_size = ip_range.to_range.to_a.size
+        if range_size < minimum_total_instances
+          say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
+          ip_range = nil
+        end
+      rescue IPAddr::InvalidAddressError
+        say "Invalid CIDR format. Example 10.11.12.10/30".make_red
+      end
+      @compilation_workers = ip_range.to_range.to_a.size - deployment_instances
+      excluded_reserved_ranges = existing_subnet_range.reject(ip_range)
+      say "Subnet range: #{existing_subnet['range']}"
+      say "Subnet useful range: #{ip_range.to_range.first}-#{ip_range.to_range.last}"
+      reserved_ranges = [
+        "#{excluded_reserved_ranges.first.first}-#{excluded_reserved_ranges.first.last}",
+        "#{excluded_reserved_ranges.last.first}-#{excluded_reserved_ranges.last.last}",
+      ]
+      say "Subnet reserved ranges: #{reserved_ranges.join(', ')}"
+
+      ask("Confirm these subnet sub-ranges make sense. If they don't, Ctrl-C, repeat and enter valid CIDR above... ".make_yellow)
     end
   end
 end
