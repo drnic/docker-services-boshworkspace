@@ -126,24 +126,24 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
   def setup_new_subnet
     say "No other deployments using same subnet".make_green
     until subnet_range
-      @subnet_range = ask("Subnet CIDR range: ").to_s
-      @range = IPAddr.new(range)
-      range_size = @range.to_range.to_a.size
-      if range_size < minimum_total_instances
-        say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
-        @subnet_range = nil
+      begin
+        @subnet_range = ask("Subnet CIDR range: ").to_s
+        @range = IPAddr.new(subnet_range)
+        range_size = @range.to_range.to_a.size
+        if range_size < minimum_total_instances
+          say "#{range_size} IPs is too few. Require minimum #{minimum_total_instances} IPs".make_red
+          @subnet_range = nil
+        end
+      rescue IPAddr::InvalidAddressError
+        say "Invalid CIDR format. Example 10.11.12.10/30".make_red
       end
-
-    rescue IPAddr::InvalidAddressError
-      say "Invalid CIDR format. Example 10.11.12.10/30".make_red
     end
-
     # gateway is next IP of range
-    @subnet_gateway = subnet_range.succ
+    @subnet_gateway = @range.succ.to_s
 
-    subnet_start = subnet_range.to_s
+    subnet_start = @range.to_s
     # default DNS is X.Y.0.2
-    @subnet_dns = subnet_start.gsub(/\.\d+\.\d+$/, '.0.2')
+    @subnet_dns = [subnet_start.gsub(/\.\d+\.\d+$/, '.0.2')]
 
     @subnet_reserved = ["#{subnet_start.gsub(/\.\d+$/, '.2')}-#{subnet_start.gsub(/\.\d+$/, '.4')}"]
   end

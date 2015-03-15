@@ -51,7 +51,11 @@ module Bosh::Cli::Command
         f << cloud_deployment.manifest_stub.to_yaml
       end
       sh "bosh deployment #{deployment_stub_file}"
-      sh "bosh deploy"
+      sh "bosh deploy" do |ok, res|
+        if ! ok
+          err "Exiting as 'bosh deploy' failed. Please investigate deployment error. Sorry."
+        end
+      end
 
       say "Docker images being fetched. Polling until broker alive...".make_green
       require "net/http"

@@ -1,21 +1,6 @@
 meta:
-  subnet_ids:
-    docker: (( merge ))
-  security_groups: (( merge ))
   instance_type: m1.large
-  subnets:
-    - range: 10.10.5.0/24
-      name: default_unused
-      reserved:
-        - 10.10.5.2 - 10.10.5.9
-      static:
-        - 10.10.5.10 - 10.10.5.250
-      gateway: 10.10.5.1
-      dns:
-        - 10.10.0.2
-      cloud_properties:
-        security_groups: (( meta.security_groups ))
-        subnet: (( meta.subnet_ids.docker ))
+  subnets: (( merge ))
 
 networks:
   - name: default
