@@ -175,3 +175,32 @@ Once the command above works you can now enable your services to some/all organi
 cf service-access
 cf enable-service-access <service_name>
 ```
+
+### Re-using a subnet
+
+On AWS VPC there is support in `bosh setup deployment` to reuse a subnet. It will create a valid BOSH deployment manifest `networks` subnet with reserved ranges to protect your other deployments.
+
+If you choose a subnet that is already being used by another BOSH deployment (within the same BOSH) you will be prompted:
+
+```
+Subnet ID: subnet-5d51d338
+Other deployments using same subnet 'subnet-5d51d338': cf-containers-broker-memcached14
+Ctrl-C to cancel to choose alternate subnet, or...
+Enter range of IPs (CIDR format: 10.10.5.0/30): 10.10.5.16/30
+Subnet range: 10.10.5.0/24
+Subnet useful range: 10.10.5.16-10.10.5.19
+Subnet reserved ranges: 10.10.5.2-10.10.5.15, 10.10.5.20-10.10.5.254
+Confirm these subnet sub-ranges make sense and press ENTER. If they don't, Ctrl-C, repeat and enter valid CIDR above...
+```
+
+In the example above the subnet `subnet-5d51d338` is already being used by another BOSH deployment (it looks through all deployments in the target BOSH director).
+
+The full range of the subnet is `10.10.5.0/24`, so the user entered a sub-range of `10.10.5.16/30`.
+
+The terminal confirms that this maps to the range of IPs: `10.10.5.16-10.10.5.19`
+
+More importantly from a BOSH deployment manifest perspective, it shows the unusable/reserved ranges of IPs - everything else in the subnet that is not `10.10.5.16/30`.
+
+If this is correct, press `ENTER`.
+
+The BOSH deployment will continue as previously described above.
