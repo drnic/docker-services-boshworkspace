@@ -52,20 +52,21 @@ Choose a service (or ALL): 12
 bosh deployment deployments/my-neo4j21-services-warden.yml
 WARNING: loading local plugin: lib/bosh/cli/commands/setup_deployment.rb
 Deployment set to `.../.deployments/my-neo4j21-services-warden.yml'
-```
 
-You are now ready to proceed to uploading assets and starting the deployment.
-
-```
-bosh prepare deployment
 bosh deploy
+...
+Are you sure you want to deploy? (type 'yes' to continue):
 ```
 
-After BOSH finishes deployment the broker is not yet ready (although you can't see this status). It is quietly downloading the Docker images for the service(s) you selected. This can take a few minutes or many minutes (if you selected all the services).
+Type `yes` to continue with the deployment.
 
-Run the following command every minute or so until it works.
 
-cf create-service-broker docker containers containers http://cf-containers-broker.10.244.0.34.xip.io
+After BOSH finishes the deployment, the broker is not yet ready. The terminal will start polling for the broker. For a few minutes the VM will be downloading the 1 docker image per service.
+
+Finally, you will be prompted to run a command like the one below. It will include the correct password:
+
+```
+cf create-service-broker docker containers PASSWORD http://cf-containers-broker.10.244.0.34.xip.io
 ```
 
 Once the command above works you can now enable your services to some/all organizations:
@@ -77,25 +78,100 @@ cf enable-service-access <service_name>
 
 ### Deploy on AWS VPC
 
-Change and target the `deployments/docker-aws-vpc.yml` to deploy it into a VPC.
+To deploy any or all the docker services to your AWS VPC, run:
 
-By default, it assumes you are deploying into a `10.10.5.0/24` subnet. This is an optimization for users of [terraform-aws-cf-install](https://github.com/cloudfoundry-community/terraform-aws-cf-install) which creates this subnet for us.
+```
+bosh setup deployment
+```
 
-If you want to deploy into another subnet CIDR, then add a `meta.subnets` to your deployment file to look something like:
+It will prompt you for the following and ultimately commence deployment of the VM:
 
-```yaml
-meta:
-  subnets:
-  - range: 10.10.5.0/24
-  name: default_unused
-  reserved:
-    - 10.10.5.2 - 10.10.5.9
-    static:
-      - 10.10.5.10 - 10.10.5.250
-      gateway: 10.10.5.1
-      dns:
-        - 10.10.0.2
-        cloud_properties:
-          security_groups: (( meta.security_groups ))
-          subnet: (( meta.subnet_ids.docker ))
+- select your target Cloud Foundry (or will show the only CF deployment if there is only one)
+- select a docker service to deploy into a single VM (or 'ALL' if your single VM wishes to support all docker services)
+- select an AWS instance type (list include 64-bit, paravirtual, with some ephemeral disk for docker containers)
+- specify the persistent disk size (where all services' data is stored)
+- specify the subnet ID (e.g. `subnet-5d51d338`)
+- specify the subnet range (e.g. `10.10.5.0/24`) OR
+- specify the sub-range within a shared subnet (e.g. `10.10.5.16/30`)
+- confirm to commence deployment of the new BOSH deployment manifest
+
+The output will look similar to below:
+
+```
+$ bosh setup deployment
+WARNING: loading local plugin: lib/bosh/cli/commands/setup_deployment.rb
+Looking up 'cf-aws-tiny'...
+
+1. ALL
+2. Memcached 1.4
+3. MongoDB 2.6
+4. CouchDB 1.6
+5. NATS
+6. Redis 2.8
+7. Elasticsearch 1.3
+8. Neo4j 2.1
+9. Logstash 1.4
+10. Etcd 0.4.6
+11. Consul 0.3.1
+12. PostgreSQL 9.3
+13. MySQL 5.6
+14. RabbitMQ 3.3
+15. RethinkDB 1.14.0
+16. ArangoDB 2.2
+Choose a service (or ALL): 2
+
+Security groups: cf-0-vpc-fa2f849f
+
+1. m1.large (850 disk, 7680 ram, 4 cores)
+2. m1.xlarge (1690 disk, 15360 ram, 8 cores)
+3. c1.xlarge (1690 disk, 7168 ram, 20 cores)
+4. c3.large (32 disk, 3750 ram, 7 cores)
+5. c3.xlarge (80 disk, 7168 ram, 14 cores)
+...
+Instance type: 1
+
+Persistent disk volume size (Gb): 200
+
+Subnet ID: subnet-5d51d338
+No other deployments using same subnet
+Subnet CIDR range: 10.10.5.0/24
+```
+
+It will then automatically target the generated deployment manifest:
+
+```
+bosh deployment deployments/cf-containers-broker-memcached14.yml
+Deployment set to `.../.deployments/cf-containers-broker-memcached14.yml'
+```
+
+And then attempt to deploy the new deployment manifest:
+
+```
+bosh deploy
+
+WARNING: loading local plugin: lib/bosh/cli/commands/setup_deployment.rb
+Generating deployment manifest
+...
+Deploying
+---------
+Deployment name: `cf-containers-broker-memcached14.yml'
+Director name: `bosh-vpc-fa2f849f'
+Are you sure you want to deploy? (type 'yes' to continue):
+```
+
+Type `yes` to continue with the deployment.
+
+After BOSH finishes the deployment, the broker is not yet ready. The terminal will start polling for the broker. For a few minutes the VM will be downloading the 1 docker image per service.
+
+Finally, you will be prompted to run a command like the one below. It will include the correct password:
+
+```
+cf create-service-broker docker containers PASSWORD http://cf-containers-broker.10.244.0.34.xip.io
+```
+
+Once the command above works you can now enable your services to some/all organizations:
+
+```
+cf service-access
+cf enable-service-access <service_name>
 ```
