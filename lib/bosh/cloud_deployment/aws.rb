@@ -107,7 +107,7 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       manifest["networks"].each do |network|
         if network["subnets"] && (subnets = network["subnets"])
           found_subnet = subnets.find do |subnet|
-            next true if subnet["cloud_properties"]["subnet"] == subnet_id
+            next true  if subnet["cloud_properties"] && (subnet["cloud_properties"]["subnet"] == subnet_id)
           end
           return found_subnet if found_subnet
         end

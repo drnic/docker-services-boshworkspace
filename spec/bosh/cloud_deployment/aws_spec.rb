@@ -38,21 +38,58 @@ describe Bosh::CloudDeployment::AWS do
       end
     end
 
-    describe "deployment_subnets" do
-      it "discovers subnets from cf-tiny-aws manifest" do
-        cf_manifest = YAML.load_file(spec_asset("cf-aws-tiny.yml"))
-        expect(subject).to receive(:get_deployment_manifest).with("cf").and_return(cf_manifest)
-        expect(subject.deployment_subnets("cf")).to eq(%w[subnet-5351d336 subnet-0061c177 subnet-5251d337])
-      end
-      it "discovers subnets from cf-aws-dedicated-v194 manifest" do
+    describe "with cf-aws-dedicated-v194" do
+      before do
         cf_manifest = YAML.load_file(spec_asset("cf-aws-dedicated-v194.yml"))
         expect(subject).to receive(:get_deployment_manifest).with("cf").and_return(cf_manifest)
+      end
+      it "discovers subnets from CF manifest" do
         expect(subject.deployment_subnets("cf")).to eq(%w[subnet-76d8045d subnet-dda036aa])
       end
-      it "discovers subnets from cf-redis-aws manifest" do
+      it "subnet already being used" do
+        expect(subject).to receive(:existing_deployment_names).and_return(["cf"])
+        expect(subject.deployments_using_subnet("subnet-new")).to eq []
+      end
+      it "no deployments using subnet" do
+        expect(subject).to receive(:existing_deployment_names).and_return(["cf"])
+        expect(subject.deployments_using_subnet("subnet-76d8045d")).to eq ["cf"]
+      end
+
+      it "subnet_from_deployment finds subnet" do
+        subnet = subject.subnet_from_deployment("subnet-dda036aa", "cf")
+        expect(subnet).to_not be_nil
+        expect(subnet["range"]).to eq "10.202.83.128/25"
+      end
+      it "subnet_from_deployment does not find subnet" do
+        subnet = subject.subnet_from_deployment("subnet-unknown", "cf")
+        expect(subnet).to be_nil
+      end
+    end
+
+    describe "with cf-redis-aws" do
+      before do
         cf_manifest = YAML.load_file(spec_asset("cf-redis-aws.yml"))
         expect(subject).to receive(:get_deployment_manifest).with("redis").and_return(cf_manifest)
+      end
+      it "discovers subnets from redis manifest" do
         expect(subject.deployment_subnets("redis")).to eq(%w[subnet-55d8047e])
+      end
+      it "subnet already being used" do
+        expect(subject).to receive(:existing_deployment_names).and_return(["redis"])
+        expect(subject.deployments_using_subnet("subnet-new")).to eq []
+      end
+      it "no deployments using subnet" do
+        expect(subject).to receive(:existing_deployment_names).and_return(["redis"])
+        expect(subject.deployments_using_subnet("subnet-55d8047e")).to eq ["redis"]
+      end
+      it "subnet_from_deployment finds subnet" do
+        subnet = subject.subnet_from_deployment("subnet-55d8047e", "redis")
+        expect(subnet).to_not be_nil
+        expect(subnet["range"]).to eq "10.202.84.0/25"
+      end
+      it "subnet_from_deployment does not find subnet" do
+        subnet = subject.subnet_from_deployment("subnet-unknown", "redis")
+        expect(subnet).to be_nil
       end
     end
 
