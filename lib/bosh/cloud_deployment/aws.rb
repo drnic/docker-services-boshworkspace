@@ -27,10 +27,10 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       @instance_type = choose do |menu|
         menu.prompt = 'Instance type: '
         Fog::Compute::AWS::FLAVORS.each do |flavor|
-          if flavor[:disk] > 0 && flavor[:bits] == 64
-            flavor_id = flavor[:id]
+          flavor_id = flavor[:id]
+          if flavor[:disk] > 0 && flavor[:bits] == 64 && !hvm_instance_type(flavor_id)
             disk_gb = flavor[:disk] / 1024
-            menu.choice("#{flavor_id} (#{flavor[:disk]} disk, #{flavor[:ram]} ram, #{flavor[:cpu]} cpus)") { flavor_id }
+            menu.choice("#{flavor_id} (#{flavor[:disk]} disk, #{flavor[:ram]} ram, #{flavor[:cores]} cores)") { flavor_id }
           end
         end
       end
@@ -205,6 +205,12 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
       "#{first_range.first.succ.succ}-#{first_range.last}",
       "#{last_range.first}-#{last_range.last.to_s.gsub(/\.\d+$/, '.254')}",
     ]
+  end
+
+  # Currently BOSH doesn't have HVM AMIs, so keep it simple and do not offer them
+  # http://aws.amazon.com/amazon-linux-ami/instance-type-matrix/
+  def hvm_instance_type(flavor_id)
+    flavor_id =~ /^(t2|c4|r3|g2|i2|cc2|cr1)/
   end
 end
 Bosh::CloudDeployment.register("aws", Bosh::CloudDeployment::AWS)
