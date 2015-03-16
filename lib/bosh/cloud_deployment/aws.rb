@@ -90,7 +90,9 @@ class Bosh::CloudDeployment::AWS < Bosh::CloudDeployment::Base
         #       subnet: subnet-5351d336
         if network["subnets"] && (subnets = network["subnets"])
           subnets.each do |subnet|
-            list << subnet["cloud_properties"]["subnet"]
+            if subnet["cloud_properties"] && subnet["cloud_properties"]["subnet"]
+              list << subnet["cloud_properties"]["subnet"]
+            end
           end
         end
       end
