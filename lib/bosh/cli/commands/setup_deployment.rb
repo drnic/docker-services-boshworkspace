@@ -108,9 +108,16 @@ module Bosh::Cli::Command
         names = names.inject([]) do |list, deployment_name|
           if manifest_yaml = director.get_deployment(deployment_name)["manifest"]
             manifest = YAML.load(manifest_yaml)
-            releases = manifest["releases"].map {|rel| rel["name"]}
-            if releases.include?(includes_release)
-              list << deployment_name
+            # test for old-style manifest schema
+            if manifest["release"]
+              if manifest["release"]["name"] == "cf"
+                list << deployment_name
+              end
+            else
+              releases = manifest["releases"].map {|rel| rel["name"]}
+              if releases.include?(includes_release)
+                list << deployment_name
+              end
             end
           end
           list
