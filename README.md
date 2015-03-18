@@ -204,3 +204,14 @@ More importantly from a BOSH deployment manifest perspective, it shows the unusa
 If this is correct, press `ENTER`.
 
 The BOSH deployment will continue as previously described above.
+
+## Enabling security group access
+
+It is possible that your Cloud Foundry is configured by default to disallow applications to communicate with your Docker services. This is true for the bosh-lite deployment, for example.
+
+```
+cf create-security-group docker extras/sg-bosh-lite.json
+cf bind-running-security-group docker
+```
+
+Restart any applications to have them granted access to Docker services.
