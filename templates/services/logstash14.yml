@@ -32,8 +32,8 @@ properties:
             name: 'free'
             container:
               backend: 'docker'
-              image: 'lnguyen/el'
-              tag: 'latest'
+              image: 'lnguyen/logstash'
+              tag: '1.4'
             syslog_drain_port: '514/tcp'
             description: 'Free Trial'
             metadata:
