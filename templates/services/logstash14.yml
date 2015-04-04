@@ -34,6 +34,8 @@ properties:
               backend: 'docker'
               image: 'lnguyen/logstash'
               tag: '1.4'
+              persistent_volumes:
+                - '/data'
             syslog_drain_port: '514/tcp'
             description: 'Free Trial'
             metadata:
